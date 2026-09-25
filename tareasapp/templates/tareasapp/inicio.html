@@ -92,15 +92,15 @@
 
             <div class="botones">
 
-                <a href="#">
+                <a href="{% url 'detalle_tarea' tarea.id %}">
                     👁️ Ver
                 </a>
 
-                <a href="#">
+                <a href="{% url 'editar_tarea' tarea.id %}">
                     ✏️ Editar
                 </a>
 
-                <a href="#">
+                <a href="{% url 'eliminar_tarea' tarea.id %}">
                     🗑️ Eliminar
                 </a>
 

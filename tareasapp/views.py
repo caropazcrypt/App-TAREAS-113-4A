@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth import authenticate
 
@@ -120,4 +120,56 @@ class TareasApiView(APIView):
 
         return Response(datos, status.HTTP_200_OK)
 
+    def post(self, request):
 
+        titulo = request.data.get('titulo')
+        descripcion = request.data.get('descripcion')
+        completada = request.data.get('completada', False)
+
+        #validar que los campos obligaroios tengan datos
+        if not titulo or not descripcion:
+            return Response({
+                'error': 'el título y la descripción son obligatorias'
+            }, status = status.HTTP_400_BAD_REQUEST)
+
+        #crear y cuardar la tarea en la BD
+        tarea = Tarea.objects.create(
+            titulo = titulo,
+            descripcion = descripcion,
+            completada = completada
+        )
+
+        #Devolver la tarea creada
+
+        return Response({
+            'mensaje': 'Tarea creada correctamente',
+            'tarea': {
+                'id': tarea.id,
+                'titulo': tarea.titulo,
+                'descripcion': tarea.descripcion,
+                'completada': tarea.completada
+            }
+        }, status = status.HTTP_201_CREATED)
+
+class TareaDetalleApiView(APIView):
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    #GET: consultat una tarea por id
+    def get(self, request, id):
+        tarea = get_object_or_404(Tarea, id=id)
+
+        return Response({
+            'id': tarea.id,
+            'titulo': tarea.titulo,
+            'descripcion': tarea.descripcion,
+            'completada': tarea.completada
+        }, status=status.HTTP_200_OK)
+
+    #DELETE eliminar una tarea
+    def delete(self, request, id):
+        tarea = get_object_or_404(Tarea, id=id)
+        tarea.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

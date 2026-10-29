@@ -81,6 +81,7 @@
             <p><strong>ID:</strong> {{ tarea.id }}</p>
             <p><strong>Título:</strong> {{ tarea.titulo }}</p>
             <p><strong>Descripción:</strong> {{ tarea.descripcion }}</p>
+
             <p>
                 <strong>Estado:</strong>
                 {% if tarea.completada %}
@@ -106,18 +107,30 @@
         <p id="mensaje"></p>
     </main>
 
+    <!-- Django entrega el ID de forma segura -->
+    {{ tarea.id|json_script:"tarea-id" }}
+
     <script>
+        // Obtener el token de autenticación
         const token = sessionStorage.getItem('token');
-        const tareaId = {{ tarea.id }};
+
+        // Obtener el ID entregado por Django
+        const tareaId = JSON.parse(
+            document.getElementById('tarea-id').textContent
+        );
+
         const btnEliminar = document.getElementById('btnEliminar');
         const mensaje = document.getElementById('mensaje');
 
         btnEliminar.addEventListener('click', async function() {
+
+            // Verificar autenticación
             if (!token) {
                 window.location.href = '/';
                 return;
             }
 
+            // Confirmar eliminación
             const confirmar = confirm(
                 '¿Realmente deseas eliminar esta tarea?'
             );
@@ -130,6 +143,7 @@
             mensaje.textContent = 'Eliminando tarea...';
 
             try {
+                // Solicitud DELETE a la API REST
                 const respuesta = await fetch(
                     `/api/tareas/${tareaId}/`,
                     {
@@ -140,22 +154,26 @@
                     }
                 );
 
+                // Token inválido o sin permisos
                 if (respuesta.status === 401 ||
                     respuesta.status === 403) {
+
                     sessionStorage.removeItem('token');
                     window.location.href = '/';
                     return;
                 }
 
+                // Verificar errores
                 if (!respuesta.ok) {
                     throw new Error(
                         `No se pudo eliminar la tarea. HTTP ${respuesta.status}`
                     );
                 }
 
-                // DELETE puede responder con HTTP 204 sin contenido.
+                // DELETE exitoso (HTTP 204)
                 mensaje.textContent = 'Tarea eliminada correctamente.';
 
+                // Regresar al listado
                 window.location.href = '/tareas/';
 
             } catch (error) {
